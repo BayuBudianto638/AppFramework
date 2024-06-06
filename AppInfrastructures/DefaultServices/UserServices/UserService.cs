@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using Nelibur.ObjectMapper;
 using System;
 using System.Collections.Generic;
+using System.Data.Common;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -23,7 +24,7 @@ namespace AppInfrastructures.DefaultServices.UserServices
             Mapper.Configure();
         }
 
-        public async Task Create(CreateUserDto model)
+        public async Task<(bool, string)> Create(CreateUserDto model)
         {
             using var transaction = await _appDbContext.Database.BeginTransactionAsync();
             try
@@ -33,15 +34,17 @@ namespace AppInfrastructures.DefaultServices.UserServices
                 await _appDbContext.SaveChangesAsync();
 
                 await transaction.CommitAsync();
+
+                return await Task.Run(() => (true, "Success"));
             }
-            catch
+            catch (DbException dbex)
             {
                 await transaction.RollbackAsync();
-                throw;
+                return await Task.Run(() => (false, dbex.Message));
             }
         }
 
-        public async Task Delete(int id)
+        public async Task<(bool, string)> Delete(int id)
         {
             using var transaction = await _appDbContext.Database.BeginTransactionAsync();
             try
@@ -56,11 +59,13 @@ namespace AppInfrastructures.DefaultServices.UserServices
                 await _appDbContext.SaveChangesAsync();
 
                 await transaction.CommitAsync();
+
+                return await Task.Run(() => (true, "Success"));
             }
-            catch
+            catch (DbException dbex)
             {
                 await transaction.RollbackAsync();
-                throw;
+                return await Task.Run(() => (false, dbex.Message));
             }
         }
 
@@ -129,7 +134,7 @@ namespace AppInfrastructures.DefaultServices.UserServices
             return pagedResult;
         }
 
-        public async Task Update(UpdateUserDto model)
+        public async Task<(bool, string)> Update(UpdateUserDto model)
         {
             using var transaction = await _appDbContext.Database.BeginTransactionAsync();
             try
@@ -139,11 +144,13 @@ namespace AppInfrastructures.DefaultServices.UserServices
                 await _appDbContext.SaveChangesAsync();
 
                 await transaction.CommitAsync();
+
+                return await Task.Run(() => (true, "Success"));
             }
-            catch
+            catch (DbException dbex)
             {
                 await transaction.RollbackAsync();
-                throw;
+                return await Task.Run(() => (false, dbex.Message));
             }
         }
     }

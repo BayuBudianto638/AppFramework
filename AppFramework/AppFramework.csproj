@@ -16,4 +16,9 @@
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.4.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\AppDatabase\AppDatabase.csproj" />
+    <ProjectReference Include="..\AppInfrastructures\AppInfrastructures.csproj" />
+  </ItemGroup>
+
 </Project>

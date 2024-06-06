@@ -11,10 +11,10 @@ namespace AppInfrastructures.DefaultServices.UserServices
     public interface IUserService
     {
         Task Create(CreateUserDto model);
-        void Update(UpdateUserDto model);
-        void Delete(int id);
-        PagedResult<UserListDto> GetAllUsers(PageInfo pageinfo);
-        UpdateUserDto GetUserByCode(string code);
-        PagedResult<UserListDto> SearchUser(string searchString, PageInfo pageinfo);
+        Task Update(UpdateUserDto model);
+        Task Delete(int id);
+        Task<PagedResult<UserListDto>> GetAllUsers(PageInfo pageinfo);
+        Task<UpdateUserDto> GetUserByCode(string code);
+        Task<PagedResult<UserListDto>> SearchUser(string searchString, PageInfo pageinfo);
     }
 }

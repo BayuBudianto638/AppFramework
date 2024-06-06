@@ -3,6 +3,7 @@ using AppDatabase.Models;
 using AppInfrastructures.ConfigProfile;
 using AppInfrastructures.DefaultServices.UserServices.Dto;
 using AppInfrastructures.Helpers;
+using Microsoft.EntityFrameworkCore;
 using Nelibur.ObjectMapper;
 using System;
 using System.Collections.Generic;
@@ -63,24 +64,87 @@ namespace AppInfrastructures.DefaultServices.UserServices
             }
         }
 
-        public PagedResult<UserListDto> GetAllUsers(PageInfo pageinfo)
+        public async Task<PagedResult<UserListDto>> GetAllUsers(PageInfo pageinfo)
         {
-            throw new NotImplementedException();
+            var pagedResult = new PagedResult<UserListDto>
+            {
+                Data = (from user in _appDbContext.Users
+                        select new UserListDto
+                        {
+                            UserCode = user.UserCode,
+                            UserName = user.UserName
+                        })
+                        .Skip(pageinfo.Skip)
+                        .Take(pageinfo.PageSize)
+                        .OrderBy(w => w.UserCode),
+                Total = await _appDbContext.Users.CountAsync()
+            };
+
+            return pagedResult;
         }
 
-        public UpdateUserDto GetUserByCode(string code)
+        public async Task<UpdateUserDto> GetUserByCode(string code)
         {
-            throw new NotImplementedException();
+            var user = await _appDbContext.Users.FirstOrDefaultAsync(w => w.UserCode == code);
+            if (user == null)
+            {
+                return null;
+            }
+
+            var productDto = TinyMapper.Map<UpdateUserDto>(user);
+            return productDto;
         }
 
-        public PagedResult<UserListDto> SearchUser(string searchString, PageInfo pageinfo)
+        public async  Task<PagedResult<UserListDto>> SearchUser(string searchString, PageInfo pageInfo)
         {
-            throw new NotImplementedException();
+            var users = _appDbContext.Users.AsQueryable();
+
+            if (!string.IsNullOrEmpty(searchString))
+            {
+                users = users.Where(s => s.UserName.Contains(searchString)
+                                        || s.UserCode.Contains(searchString));
+            }
+
+            var query = from user in users
+                        select new UserListDto
+                        {
+                            UserCode = user.UserCode,
+                            UserName = user.UserName
+                        };
+
+            var pagedData = await query
+                .Skip(pageInfo.Skip)
+                .Take(pageInfo.PageSize)
+                .OrderBy(w => w.UserCode)
+                .ToListAsync();
+
+            var total = await users.CountAsync();
+
+            var pagedResult = new PagedResult<UserListDto>
+            {
+                Data = pagedData,
+                Total = total
+            };
+
+            return pagedResult;
         }
 
-        public void Update(UpdateUserDto model)
+        public async Task Update(UpdateUserDto model)
         {
-            throw new NotImplementedException();
+            using var transaction = await _appDbContext.Database.BeginTransactionAsync();
+            try
+            {
+                var users = TinyMapper.Map<Users>(model);
+                _appDbContext.Entry(users).State = EntityState.Modified;
+                await _appDbContext.SaveChangesAsync();
+
+                await transaction.CommitAsync();
+            }
+            catch
+            {
+                await transaction.RollbackAsync();
+                throw;
+            }
         }
     }
 }
